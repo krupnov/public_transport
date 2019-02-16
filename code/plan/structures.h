@@ -6,7 +6,7 @@
 
 namespace data_structures {
     struct agency_t {
-        uint64_t id;
+        std::string id;
         std::string name;
         std::string url;
         std::string timezone;

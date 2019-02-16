@@ -12,14 +12,15 @@ namespace fs = boost::filesystem;
 namespace {
     constexpr int AGENCIES_COLUMN_COUNT = 4;
 
-    std::unordered_map<uint64_t, data_structures::agency_t> parse_agencies(fs::path const& path) {
-        std::unordered_map<uint64_t, data_structures::agency_t> agencies;
+    std::unordered_map<std::string, std::shared_ptr<data_structures::agency_t>> parse_agencies(fs::path const& path) {
+        std::unordered_map<std::string, std::shared_ptr<data_structures::agency_t>> agencies;
         io::CSVReader<AGENCIES_COLUMN_COUNT, io::trim_chars<' '>, io::double_quote_escape<',','\"'>> reader(
                 path.string());
         reader.read_header(io::ignore_extra_column, "agency_id", "agency_name", "agency_url", "agency_timezone");
-        data_structures::agency_t agency;
-        while (reader.read_row(agency.id, agency.name, agency.url, agency.timezone)) {
-            agencies.emplace(agency.id,  std::move(agency));
+        auto agency = std::make_shared<data_structures::agency_t>();
+        while (reader.read_row(agency->id, agency->name, agency->url, agency->timezone)) {
+            agencies.emplace(agency->id,  std::move(agency));
+            agency = std::make_shared<data_structures::agency_t>();
         }
         return agencies;
     }

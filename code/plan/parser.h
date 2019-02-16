@@ -4,6 +4,7 @@
 #include "structures.h"
 
 #include <string>
+#include <memory>
 
 namespace util {
 
