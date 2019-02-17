@@ -5,6 +5,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/gregorian/greg_weekday.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/geometry/geometries/geometries.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -12,10 +13,13 @@
 #include <unordered_set>
 
 namespace data_structures {
+    namespace bg = boost::geometry;
+
     struct route_t;
     struct agency_t;
     struct service_t;
     struct service_exception_t;
+    struct stop_t;
 
     template<typename T>
     using value_by_id = std::unordered_map<std::string, T>;
@@ -26,8 +30,10 @@ namespace data_structures {
     using agency_ptr = std::shared_ptr<agency_t>;
     using service_ptr = std::shared_ptr<service_t>;
     using service_exception_ptr = std::shared_ptr<service_exception_t>;
+    using stop_ptr = std::shared_ptr<stop_t>;
 
     using date_t = boost::gregorian::date;
+    using point_t = bg::model::point<double, 2, bg::cs::geographic<bg::degree> >;
 
     struct agency_t {
         std::string id;
@@ -65,6 +71,13 @@ namespace data_structures {
        date_t end;
        std::unordered_set<week_day> week_days;
        std::unordered_map<date_t, service_exception_ptr, date_hasher_t> exceptions;
+    };
+
+    struct stop_t {
+        std::string id;
+        std::string name;
+        point_t location;
+        stop_ptr parent;
     };
 }
 

@@ -8,6 +8,7 @@
 #include <exception>
 #include <unordered_map>
 #include <iostream>
+#include <utility>
 
 namespace fs = boost::filesystem;
 namespace ds = data_structures;
@@ -20,6 +21,7 @@ namespace {
     constexpr int ROUTES_COLUMN_COUNT = 6;
     constexpr int REGULAR_SERVICES_COLUMN_COUNT = 10;
     constexpr int EXCEPTIONAL_SERVICES_COLUMN_COUNT = 3;
+    constexpr int STOPS_COLUMN_COUNT = 5;
 
     ds::value_by_id<ds::agency_ptr> parse_agencies(fs::path const& path) {
         ds::value_by_id<ds::agency_ptr> agencies;
@@ -104,6 +106,29 @@ namespace {
             service_exception = std::make_shared<ds::service_exception_t>();
         }
     }
+
+    ds::value_by_id<ds::stop_ptr> parse_stops(fs::path const& path) {
+        csv_reader<STOPS_COLUMN_COUNT> reader(path.string());
+        reader.read_header(io::ignore_extra_column | io::ignore_missing_column, "stop_id", "stop_name", "stop_lat",
+                "stop_lan", "parent_station");
+        auto stop = std::make_shared<ds::stop_t>();
+        ds::value_by_id<ds::stop_ptr> stops;
+        double lat, lan;
+        std::string parent_id;
+        std::vector<std::pair<ds::stop_ptr, std::string>> with_parent;
+        while (reader.read_row(stop->id, stop->name, lat, lan, parent_id)) {
+            stop->location = ds::point_t(lat, lan);
+            if (!parent_id.empty()) {
+                with_parent.emplace_back(stop, parent_id);
+            }
+            stops.emplace(stop->id, std::move(stop));
+            stop = std::make_shared<ds::stop_t>();
+        }
+        for (auto& update : with_parent) {
+            update.first->parent = stops.at(update.second);
+        }
+        return stops;
+    }
 }
 
 namespace util {
@@ -123,5 +148,7 @@ namespace util {
             parse_exceptional_services(exceptional_service_path, services);
             std::cout << "Service exceptions added" << std::endl;
         }
+        auto stops = parse_stops(get_table_path(feed, "stops.txt"));
+        std::cout << "Stops count: " << stops.size() << std::endl;
     }
 }
