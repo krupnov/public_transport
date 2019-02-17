@@ -21,6 +21,7 @@ namespace data_structures {
     struct service_exception_t;
     struct stop_t;
     struct transfer_t;
+    struct trip_t;
 
     template<typename T>
     using value_by_id = std::unordered_map<std::string, T>;
@@ -33,6 +34,7 @@ namespace data_structures {
     using service_exception_ptr = std::shared_ptr<service_exception_t>;
     using stop_ptr = std::shared_ptr<stop_t>;
     using transfer_ptr = std::shared_ptr<transfer_t>;
+    using trip_ptr = std::shared_ptr<trip_t>;
 
     using date_t = boost::gregorian::date;
     using point_t = bg::model::point<double, 2, bg::cs::geographic<bg::degree> >;
@@ -52,11 +54,12 @@ namespace data_structures {
         std::string long_name;
         std::string desc;
         int type;
+        std::vector<trip_ptr> trips;
     };
 
     struct service_exception_t {
         date_t date;
-        int type;
+        int type; // 1 - added as subs, 2 - interrupted
     };
 
     struct date_hasher_t {
@@ -73,6 +76,7 @@ namespace data_structures {
        date_t end;
        std::unordered_set<week_day> week_days;
        std::unordered_map<date_t, service_exception_ptr, date_hasher_t> exceptions;
+       std::vector<trip_ptr> trips;
     };
 
     struct stop_t {
@@ -88,6 +92,15 @@ namespace data_structures {
         stop_ptr to;
         int type;
         boost::posix_time::time_duration duration;
+    };
+
+    struct trip_t {
+        route_ptr route;
+        service_ptr service;
+        std::string id;
+        std::string head_sign;
+        std::string short_name;
+        int direction;
     };
 }
 

@@ -23,6 +23,7 @@ namespace {
     constexpr int EXCEPTIONAL_SERVICES_COLUMN_COUNT = 3;
     constexpr int STOPS_COLUMN_COUNT = 5;
     constexpr int TRANSFERS_COLUMN_COUNT = 4;
+    constexpr int TRIPS_COLUMN_COUNT = 6;
 
     ds::value_by_id<ds::agency_ptr> parse_agencies(fs::path const& path) {
         ds::value_by_id<ds::agency_ptr> agencies;
@@ -145,6 +146,25 @@ namespace {
            transfer = std::make_shared<ds::transfer_t>();
        }
     }
+
+    ds::value_by_id<ds::trip_ptr> parse_trips(fs::path const& path,
+            ds::value_by_id<ds::route_ptr> const& routes, ds::value_by_id<ds::service_ptr> const& services) {
+        csv_reader<TRIPS_COLUMN_COUNT> reader(path.string());
+        reader.read_header(io::ignore_extra_column, "route_id", "service_id", "trip_id", "trip_headsign",
+                "trip_short_name", "direction_id");
+        auto trip = std::make_shared<ds::trip_t>();
+        ds::value_by_id<ds::trip_ptr> trips;
+        std::string route_id, service_id;
+        while (reader.read_row(route_id, service_id, trip->id, trip->head_sign, trip->short_name, trip->direction)) {
+            trip->route = routes.at(route_id);
+            trip->route->trips.push_back(trip);
+            trip->service = services.at(service_id);
+            trip->service->trips.push_back(trip);
+            trips.emplace(trip->id, std::move(trip));
+            trip = std::make_shared<ds::trip_t>();
+        }
+        return trips;
+    }
 }
 
 namespace util {
@@ -171,5 +191,7 @@ namespace util {
             parse_transfers(transfers_path, stops);
             std::cout << "Transfers parsed" << std::endl;
         }
+        auto trips = parse_trips(get_table_path(feed, "trips.txt"), routes, services);
+        std::cout << "Trips count: " << trips.size() << std::endl;
     }
 }
