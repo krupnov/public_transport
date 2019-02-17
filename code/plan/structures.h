@@ -20,6 +20,7 @@ namespace data_structures {
     struct service_t;
     struct service_exception_t;
     struct stop_t;
+    struct transfer_t;
 
     template<typename T>
     using value_by_id = std::unordered_map<std::string, T>;
@@ -31,6 +32,7 @@ namespace data_structures {
     using service_ptr = std::shared_ptr<service_t>;
     using service_exception_ptr = std::shared_ptr<service_exception_t>;
     using stop_ptr = std::shared_ptr<stop_t>;
+    using transfer_ptr = std::shared_ptr<transfer_t>;
 
     using date_t = boost::gregorian::date;
     using point_t = bg::model::point<double, 2, bg::cs::geographic<bg::degree> >;
@@ -78,6 +80,14 @@ namespace data_structures {
         std::string name;
         point_t location;
         stop_ptr parent;
+        std::vector<transfer_ptr> transfers;
+    };
+
+    struct transfer_t {
+        stop_ptr from;
+        stop_ptr to;
+        int type;
+        boost::posix_time::time_duration duration;
     };
 }
 

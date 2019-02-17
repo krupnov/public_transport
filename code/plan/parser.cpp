@@ -22,6 +22,7 @@ namespace {
     constexpr int REGULAR_SERVICES_COLUMN_COUNT = 10;
     constexpr int EXCEPTIONAL_SERVICES_COLUMN_COUNT = 3;
     constexpr int STOPS_COLUMN_COUNT = 5;
+    constexpr int TRANSFERS_COLUMN_COUNT = 4;
 
     ds::value_by_id<ds::agency_ptr> parse_agencies(fs::path const& path) {
         ds::value_by_id<ds::agency_ptr> agencies;
@@ -129,6 +130,21 @@ namespace {
         }
         return stops;
     }
+
+    void parse_transfers(fs::path const& path, ds::value_by_id<ds::stop_ptr> const& stops) {
+       csv_reader<TRANSFERS_COLUMN_COUNT> reader(path.string());
+       reader.read_header(io::ignore_extra_column, "from_stop_id", "to_stop_id", "transfer_type", "min_transfer_time");
+       auto transfer = std::make_shared<ds::transfer_t>();
+       std::string from, to;
+       int time;
+       while (reader.read_row(from, to, transfer->type, time)) {
+           transfer->from = stops.at(from);
+           transfer->to = stops.at(to);
+           transfer->duration = boost::posix_time::seconds(time);
+           stops.at(from)->transfers.emplace_back(std::move(transfer));
+           transfer = std::make_shared<ds::transfer_t>();
+       }
+    }
 }
 
 namespace util {
@@ -150,5 +166,10 @@ namespace util {
         }
         auto stops = parse_stops(get_table_path(feed, "stops.txt"));
         std::cout << "Stops count: " << stops.size() << std::endl;
+        fs::path transfers_path;
+        if (try_get_table_path(feed, "transfers.txt", transfers_path)) {
+            parse_transfers(transfers_path, stops);
+            std::cout << "Transfers parsed" << std::endl;
+        }
     }
 }
