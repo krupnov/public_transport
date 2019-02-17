@@ -37,7 +37,7 @@ namespace {
         return directory / file;
     }
 
-    ds::value_by_id<ds::route_ptr> parse_routes(fs::path const& path, ds::value_by_id<ds::agency_ptr>& agencies) {
+    ds::value_by_id<ds::route_ptr> parse_routes(fs::path const& path, ds::value_by_id<ds::agency_ptr> const& agencies) {
         ds::value_by_id<ds::route_ptr> routes;
         csv_reader<ROUTES_COLUMN_COUNT> reader(path.string());
         reader.read_header(io::ignore_extra_column,
