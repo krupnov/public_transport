@@ -17,6 +17,7 @@ namespace {
 
     constexpr int AGENCIES_COLUMN_COUNT = 4;
     constexpr int ROUTES_COLUMN_COUNT = 6;
+    constexpr int REGULAR_SERVICES_COLUMN_COUNT = 10;
 
     ds::value_by_id<ds::agency_ptr> parse_agencies(fs::path const& path) {
         ds::value_by_id<ds::agency_ptr> agencies;
@@ -52,6 +53,30 @@ namespace {
         }
         return routes;
     }
+
+    ds::value_by_id<ds::service_ptr> parse_regular_services(boost::filesystem::path path) {
+        ds::value_by_id<ds::service_ptr> services;
+        csv_reader<REGULAR_SERVICES_COLUMN_COUNT> reader(path.string());
+        reader.read_header(io::ignore_extra_column, "service_id", "monday", "tuesday", "wednesday", "thursday",
+                "friday", "saturday", "sunday" , "start_date", "end_date");
+        auto service = std::make_shared<ds::service_t>();
+        int week_days[7];
+        std::string start_date, end_date;
+        while (reader.read_row(service->id, week_days[0], week_days[1], week_days[2], week_days[3], week_days[4],
+                week_days[5], week_days[6], start_date, end_date)) {
+            service->exception_type = -1;
+            service->start = boost::gregorian::from_undelimited_string(start_date);
+            service->end = boost::gregorian::from_undelimited_string(end_date);
+            for (size_t i = 0 ; i < sizeof(week_days) / sizeof(week_days[0]) ; ++i) {
+                if (week_days[i] == 1) {
+                    service->week_days.insert(ds::week_day(i));
+                }
+            }
+            services.emplace(service->id, std::move(service));
+            service = std::make_shared<ds::service_t>();
+        }
+        return services;
+    }
 }
 
 namespace util {
@@ -64,5 +89,7 @@ namespace util {
         std::cout << "Agencies count: " << agencies.size() << std::endl;
         auto routes = parse_routes(get_table_path(feed, "routes.txt"), agencies);
         std::cout << "Routes count: " << routes.size() << std::endl;
+        auto services = parse_regular_services(get_table_path(feed_directory, "calendar.txt"));
+        std::cout << "Regular services count: " << services.size() << std::endl;
     }
 }
