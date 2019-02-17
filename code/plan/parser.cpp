@@ -4,6 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 
+#include <cassert>
 #include <exception>
 #include <unordered_map>
 #include <iostream>
@@ -18,6 +19,7 @@ namespace {
     constexpr int AGENCIES_COLUMN_COUNT = 4;
     constexpr int ROUTES_COLUMN_COUNT = 6;
     constexpr int REGULAR_SERVICES_COLUMN_COUNT = 10;
+    constexpr int EXCEPTIONAL_SERVICES_COLUMN_COUNT = 3;
 
     ds::value_by_id<ds::agency_ptr> parse_agencies(fs::path const& path) {
         ds::value_by_id<ds::agency_ptr> agencies;
@@ -31,11 +33,20 @@ namespace {
         return agencies;
     }
 
-    fs::path get_table_path(fs::path const& directory, fs::path const& file) {
+    bool try_get_table_path(fs::path const& directory, fs::path const& file, fs::path& result) {
         if (!fs::is_regular_file(directory / file)) {
+            return false;
+        }
+        result = directory / file;
+        return true;
+    }
+
+    fs::path get_table_path(fs::path const& directory, fs::path const& file) {
+        fs::path result;
+        if (!try_get_table_path(directory, file, result)) {
             throw std::runtime_error("No table found: " + file.string());
         }
-        return directory / file;
+        return result;
     }
 
     ds::value_by_id<ds::route_ptr> parse_routes(fs::path const& path, ds::value_by_id<ds::agency_ptr> const& agencies) {
@@ -54,7 +65,7 @@ namespace {
         return routes;
     }
 
-    ds::value_by_id<ds::service_ptr> parse_regular_services(boost::filesystem::path path) {
+    ds::value_by_id<ds::service_ptr> parse_regular_services(fs::path const& path) {
         ds::value_by_id<ds::service_ptr> services;
         csv_reader<REGULAR_SERVICES_COLUMN_COUNT> reader(path.string());
         reader.read_header(io::ignore_extra_column, "service_id", "monday", "tuesday", "wednesday", "thursday",
@@ -64,7 +75,6 @@ namespace {
         std::string start_date, end_date;
         while (reader.read_row(service->id, week_days[0], week_days[1], week_days[2], week_days[3], week_days[4],
                 week_days[5], week_days[6], start_date, end_date)) {
-            service->exception_type = -1;
             service->start = boost::gregorian::from_undelimited_string(start_date);
             service->end = boost::gregorian::from_undelimited_string(end_date);
             for (size_t i = 0 ; i < sizeof(week_days) / sizeof(week_days[0]) ; ++i) {
@@ -76,6 +86,23 @@ namespace {
             service = std::make_shared<ds::service_t>();
         }
         return services;
+    }
+
+    void parse_exceptional_services(fs::path const& path, ds::value_by_id<ds::service_ptr> const& services) {
+        csv_reader<EXCEPTIONAL_SERVICES_COLUMN_COUNT> reader(path.string());
+        reader.read_header(io::ignore_extra_column, "service_id", "date", "exception_type");
+        auto service_exception = std::make_shared<ds::service_exception_t>();
+        std::string date;
+        std::string service_id;
+        while (reader.read_row(service_id, date, service_exception->type)) {
+            if (services.count(service_id) == 0) {
+                assert(false);
+                continue;
+            }
+            service_exception->date = boost::gregorian::from_undelimited_string(date);
+            services.at(service_id)->exceptions.emplace(service_exception->date, std::move(service_exception));
+            service_exception = std::make_shared<ds::service_exception_t>();
+        }
     }
 }
 
@@ -91,5 +118,10 @@ namespace util {
         std::cout << "Routes count: " << routes.size() << std::endl;
         auto services = parse_regular_services(get_table_path(feed_directory, "calendar.txt"));
         std::cout << "Regular services count: " << services.size() << std::endl;
+        fs::path exceptional_service_path;
+        if (try_get_table_path(feed, "calendar_dates.txt", exceptional_service_path)) {
+            parse_exceptional_services(exceptional_service_path, services);
+            std::cout << "Service exceptions added" << std::endl;
+        }
     }
 }
