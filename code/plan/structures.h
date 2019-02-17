@@ -22,6 +22,7 @@ namespace data_structures {
     struct stop_t;
     struct transfer_t;
     struct trip_t;
+    struct stop_time_t;
 
     template<typename T>
     using value_by_id = std::unordered_map<std::string, T>;
@@ -35,6 +36,7 @@ namespace data_structures {
     using stop_ptr = std::shared_ptr<stop_t>;
     using transfer_ptr = std::shared_ptr<transfer_t>;
     using trip_ptr = std::shared_ptr<trip_t>;
+    using stop_time_ptr = std::shared_ptr<stop_time_t>;
 
     using date_t = boost::gregorian::date;
     using point_t = bg::model::point<double, 2, bg::cs::geographic<bg::degree> >;
@@ -85,6 +87,7 @@ namespace data_structures {
         point_t location;
         stop_ptr parent;
         std::vector<transfer_ptr> transfers;
+        std::vector<stop_time_ptr> stop_times;
     };
 
     struct transfer_t {
@@ -101,6 +104,15 @@ namespace data_structures {
         std::string head_sign;
         std::string short_name;
         int direction;
+        std::vector<stop_time_ptr> stop_times;
+    };
+
+    struct stop_time_t {
+        stop_ptr stop;
+        trip_ptr trip;
+        int sequence;
+        boost::posix_time::time_duration arrival;
+        boost::posix_time::time_duration departure;
     };
 }
 

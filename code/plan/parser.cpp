@@ -24,6 +24,7 @@ namespace {
     constexpr int STOPS_COLUMN_COUNT = 5;
     constexpr int TRANSFERS_COLUMN_COUNT = 4;
     constexpr int TRIPS_COLUMN_COUNT = 6;
+    constexpr int STOP_TIMES_COLUMN_COUNT = 5;
 
     ds::value_by_id<ds::agency_ptr> parse_agencies(fs::path const& path) {
         ds::value_by_id<ds::agency_ptr> agencies;
@@ -165,6 +166,27 @@ namespace {
         }
         return trips;
     }
+
+    std::vector<ds::stop_time_ptr> parse_stop_times(fs::path const& path, ds::value_by_id<ds::trip_ptr> const& trips,
+            ds::value_by_id<ds::stop_ptr> const& stops) {
+        csv_reader<STOP_TIMES_COLUMN_COUNT> reader(path.string());
+        reader.read_header(io::ignore_extra_column, "trip_id", "arrival_time", "departure_time", "stop_id",
+                "stop_sequence");
+        auto stop_time = std::make_shared<ds::stop_time_t>();
+        std::vector<ds::stop_time_ptr> stop_times;
+        std::string trip_id, stop_id, arrival, departure;
+        while (reader.read_row(trip_id, arrival, departure, stop_id, stop_time->sequence)) {
+            stop_time->arrival = boost::posix_time::duration_from_string(arrival);
+            stop_time->departure = boost::posix_time::duration_from_string(departure);
+            stop_time->trip = trips.at(trip_id);
+            stop_time->trip->stop_times.push_back(stop_time);
+            stop_time->stop = stops.at(stop_id);
+            stop_time->stop->stop_times.push_back(stop_time);
+            stop_times.emplace_back(std::move(stop_time));
+            stop_time = std::make_shared<ds::stop_time_t>();
+        }
+        return stop_times;
+    }
 }
 
 namespace util {
@@ -193,5 +215,7 @@ namespace util {
         }
         auto trips = parse_trips(get_table_path(feed, "trips.txt"), routes, services);
         std::cout << "Trips count: " << trips.size() << std::endl;
+        auto stop_times = parse_stop_times(get_table_path(feed, "stop_times.txt"), trips, stops);
+        std::cout << "Stop times count: " << stop_times.size() << std::endl;
     }
 }
