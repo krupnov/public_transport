@@ -217,5 +217,25 @@ namespace util {
         std::cout << "Trips count: " << trips.size() << std::endl;
         auto stop_times = parse_stop_times(get_table_path(feed, "stop_times.txt"), trips, stops);
         std::cout << "Stop times count: " << stop_times.size() << std::endl;
+        std::cout << "Sorting stop times inside stops by departure time " << std::endl;
+        for (auto& stop : stops) {
+            std::sort(stop.second->stop_times.begin(), stop.second->stop_times.end(),
+                    [](ds::stop_time_ptr const& l, ds::stop_time_ptr const& r) {
+               return l->departure < r->departure;
+            });
+        }
+
+        std::cout << "Some test data: " << std::endl;
+        auto const& stop = stops.at("8503052");
+        std::cout << stop->name << " name of our stop" << std::endl;
+        for (auto const& stop_time : stop->stop_times) {
+            const auto& trip = stop_time->trip;
+            std::cout << "Next trip from station: " << std::endl;
+            std::cout << "\tstarting at the : "<< stop_time->arrival  << std::endl;
+            std::cout << "\thead sign for first trip: "<< trip->head_sign  << std::endl;
+            std::cout << "\tand its type: " << trip->route->type << std::endl;
+            std::cout << "\tand its description: " << trip->route->desc << std::endl;
+        }
+
     }
 }
