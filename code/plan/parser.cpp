@@ -187,6 +187,18 @@ namespace {
         }
         return stop_times;
     }
+
+    void print_trip(ds::trip_ptr const& trip) {
+       std::cout << "Trip short name: " << trip->short_name << std::endl;
+       std::cout << "Trip stop times: " << std::endl;
+       for (auto const& stop_time : trip->stop_times) {
+           std::cout << "\tSequence num: " << stop_time->sequence << std::endl;
+           std::cout << "\tStop name: " << stop_time->stop->name << std::endl;
+           std::cout << "\tStop id: " << stop_time->stop->id << std::endl;
+           std::cout << "\tArrival time: " << stop_time->arrival << std::endl;
+           std::cout << "\tDeparture time: " << stop_time->departure << std::endl;
+       }
+    }
 }
 
 namespace util {
@@ -239,6 +251,10 @@ namespace util {
             std::cout << "\tand its type: " << trip->route->type << std::endl;
             std::cout << "\tand its description: " << trip->route->desc << std::endl;
         }
+        std::cout << "Let's have some random trips printed out" << std::endl;
+        print_trip(stop->stop_times.at(10)->trip);
+        std::cout << std::endl << "And one more" << std::endl;
+        print_trip(stop->stop_times.at(23)->trip);
         return processing::map_graph_t(std::move(trips), std::move(stops), std::move(stop_times),
                 std::move(services), std::move(routes));
     }

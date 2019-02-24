@@ -21,7 +21,13 @@ int main(int argc, char** argv) {
         po::notify(vm);
         auto feed_directory = vm["feed_directory"].as<std::string>();
         std::cout << "Parsing feed" << std::endl;
-        util::parse(feed_directory);
+        auto map = util::parse(feed_directory);
+        std::cout << "Moving from Friesenberg to Zürich HB SZU at 7am" << std::endl;
+        for (auto const& stop : map.journey(
+                "8503052", "8503088:0:22", boost::posix_time::time_from_string("2018-12-10 07:00:00.000"))) {
+            std::cout << "Next stop: " << stop.first->name << std::endl;
+            std::cout << "\tDate and time: " << stop.second << std::endl;
+        }
     } catch (std::exception const& e) {
         std::cerr << "Unhandled exception: " << e.what() << std::endl;
         return 1;
