@@ -27,8 +27,8 @@ namespace {
         return std::vector<std::pair<ds::stop_ptr, ds::date_time_t>>(deq.cbegin(), deq.cend());
     }
 
-    ds::date_time_t date_with_other_time(ds::date_time_t const &date, ds::time_t const &time) {
-        return ds::date_time_t(date.date()) + time;
+    ds::date_time_t date_with_other_time(ds::date_time_t date, ds::time_t time) {
+        return ds::date_time_t(date.date(), time);
     }
 }
 
@@ -56,7 +56,6 @@ namespace processing {
         std::unordered_map<std::string, std::shared_ptr<list_t>> visited_stops;
         std::unordered_set<std::string> used_trips;
         std::priority_queue<next_stop_t, std::vector<next_stop_t>, std::greater<next_stop_t> > queue;
-        visited_stops.emplace(start, nullptr);
         queue.emplace(departure, std::make_pair(source, nullptr));
         while (!queue.empty()) {
             auto next = queue.top();
@@ -66,7 +65,7 @@ namespace processing {
             }
             auto step = std::make_shared<list_t>();
             step->stop = next.second.first;
-            step->date_time - next.first;
+            step->date_time = next.first;
             if (next.second.second) {
                 step->parent = visited_stops.at(next.second.second->id);
             }

@@ -22,9 +22,9 @@ int main(int argc, char** argv) {
         auto feed_directory = vm["feed_directory"].as<std::string>();
         std::cout << "Parsing feed" << std::endl;
         auto map = util::parse(feed_directory);
-        std::cout << "Moving from Friesenberg to Zürich HB SZU at 7am" << std::endl;
+        std::cout << "Moving from Friesenberg to Zürich HB SZU at 22:51" << std::endl;
         for (auto const& stop : map.journey(
-                "8503052", "8503088:0:22", boost::posix_time::time_from_string("2018-12-10 07:00:00.000"))) {
+                "8503052", "8503088:0:22", boost::posix_time::time_from_string("2018-12-10 22:51:00.000"))) {
             std::cout << "Next stop: " << stop.first->name << std::endl;
             std::cout << "\tDate and time: " << stop.second << std::endl;
         }
