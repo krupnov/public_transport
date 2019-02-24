@@ -39,6 +39,8 @@ namespace data_structures {
     using stop_time_ptr = std::shared_ptr<stop_time_t>;
 
     using date_t = boost::gregorian::date;
+    using time_t = boost::posix_time::time_duration;
+    using date_time_t = boost::posix_time::ptime;
     using point_t = bg::model::point<double, 2, bg::cs::geographic<bg::degree> >;
 
     struct agency_t {
@@ -94,7 +96,7 @@ namespace data_structures {
         stop_ptr from;
         stop_ptr to;
         int type;
-        boost::posix_time::time_duration duration;
+        time_t duration;
     };
 
     struct trip_t {
@@ -111,9 +113,11 @@ namespace data_structures {
         stop_ptr stop;
         trip_ptr trip;
         int sequence;
-        boost::posix_time::time_duration arrival;
-        boost::posix_time::time_duration departure;
+        time_t arrival;
+        time_t departure;
     };
+
+    bool stop_time_cmp(stop_time_ptr const& l, stop_time_ptr const& r);
 }
 
 #endif //PLANNER_STRUCTURES_H

@@ -9,5 +9,5 @@ set(Protobuf_USE_STATIC_LIBS ON)
 
 find_package(Boost REQUIRED COMPONENTS program_options filesystem date_time)
 
-add_executable(${PROJECT_NAME} main.cpp parser.cpp parser.h structures.h map_graph_t.cpp map_graph_t.h)
+add_executable(${PROJECT_NAME} main.cpp parser.cpp parser.h structures.h map_graph_t.cpp map_graph_t.h structures.cpp)
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})

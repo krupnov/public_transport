@@ -190,7 +190,7 @@ namespace {
 }
 
 namespace util {
-    void parse(std::string const& feed_directory) {
+    processing::map_graph_t parse(std::string const& feed_directory) {
         if (!fs::is_directory(feed_directory)) {
             throw std::runtime_error("Feed directory is not directory: " + feed_directory);
         }
@@ -219,9 +219,12 @@ namespace util {
         std::cout << "Stop times count: " << stop_times.size() << std::endl;
         std::cout << "Sorting stop times inside stops by departure time " << std::endl;
         for (auto& stop : stops) {
-            std::sort(stop.second->stop_times.begin(), stop.second->stop_times.end(),
+            std::sort(stop.second->stop_times.begin(), stop.second->stop_times.end(), ds::stop_time_cmp);
+        }
+        for (auto& trip : trips) {
+            std::sort(trip.second->stop_times.begin(), trip.second->stop_times.end(),
                     [](ds::stop_time_ptr const& l, ds::stop_time_ptr const& r) {
-               return l->departure < r->departure;
+                return l->sequence < r->sequence;
             });
         }
 
@@ -236,6 +239,7 @@ namespace util {
             std::cout << "\tand its type: " << trip->route->type << std::endl;
             std::cout << "\tand its description: " << trip->route->desc << std::endl;
         }
-
+        return processing::map_graph_t(std::move(trips), std::move(stops), std::move(stop_times),
+                std::move(services), std::move(routes));
     }
 }
