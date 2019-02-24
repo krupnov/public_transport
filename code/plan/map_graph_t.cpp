@@ -97,6 +97,10 @@ namespace processing {
                             std::make_pair((*next_stop_time_it)->stop, next.second.first));
                 }
             }
+            for (auto const& transfer : next.second.first->transfers) {
+                queue.emplace(next.first + transfer->duration,
+                        std::make_pair(transfer->to, next.second.first));
+            }
         }
         if (visited_stops.count(finish) == 0) {
             throw std::runtime_error("Unable to find connection");
