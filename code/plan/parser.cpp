@@ -233,6 +233,7 @@ namespace util {
         for (auto& stop : stops) {
             std::sort(stop.second->stop_times.begin(), stop.second->stop_times.end(), ds::stop_time_cmp);
         }
+        std::cout << "Sorting stop times inside trips by sequence " << std::endl;
         for (auto& trip : trips) {
             std::sort(trip.second->stop_times.begin(), trip.second->stop_times.end(),
                     [](ds::stop_time_ptr const& l, ds::stop_time_ptr const& r) {
@@ -240,21 +241,21 @@ namespace util {
             });
         }
 
-        std::cout << "Some test data: " << std::endl;
-        auto const& stop = stops.at("8503052");
-        std::cout << stop->name << " name of our stop" << std::endl;
-        for (auto const& stop_time : stop->stop_times) {
-            const auto& trip = stop_time->trip;
-            std::cout << "Next trip from station: " << std::endl;
-            std::cout << "\tstarting at the : "<< stop_time->arrival  << std::endl;
-            std::cout << "\thead sign for first trip: "<< trip->head_sign  << std::endl;
-            std::cout << "\tand its type: " << trip->route->type << std::endl;
-            std::cout << "\tand its description: " << trip->route->desc << std::endl;
-        }
-        std::cout << "Let's have some random trips printed out" << std::endl;
-        print_trip(stop->stop_times.at(10)->trip);
-        std::cout << std::endl << "And one more" << std::endl;
-        print_trip(stop->stop_times.at(23)->trip);
+//        std::cout << "Some test data: " << std::endl;
+//        auto const& stop = stops.at("8503052");
+//        std::cout << stop->name << " name of our stop" << std::endl;
+//        for (auto const& stop_time : stop->stop_times) {
+//            const auto& trip = stop_time->trip;
+//            std::cout << "Next trip from station: " << std::endl;
+//            std::cout << "\tstarting at the : "<< stop_time->arrival  << std::endl;
+//            std::cout << "\thead sign for first trip: "<< trip->head_sign  << std::endl;
+//            std::cout << "\tand its type: " << trip->route->type << std::endl;
+//            std::cout << "\tand its description: " << trip->route->desc << std::endl;
+//       }
+//        std::cout << "Let's have some random trips printed out" << std::endl;
+//        print_trip(stop->stop_times.at(10)->trip);
+//        std::cout << std::endl << "And one more" << std::endl;
+//        print_trip(stop->stop_times.at(23)->trip);
         return processing::map_graph_t(std::move(trips), std::move(stops), std::move(stop_times),
                 std::move(services), std::move(routes));
     }

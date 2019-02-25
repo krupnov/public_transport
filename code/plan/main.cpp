@@ -22,16 +22,30 @@ int main(int argc, char** argv) {
         auto feed_directory = vm["feed_directory"].as<std::string>();
         std::cout << "Parsing feed" << std::endl;
         auto map = util::parse(feed_directory);
-        std::cout << "Moving from Friesenberg to Zürich Flughafen at 10:00" << std::endl;
-        for (auto const& stop : map.journey(
-                "8503052", "8503016:0:1", boost::posix_time::time_from_string("2018-12-10 10:00:00.000"))) {
-            std::cout << "Next stop: " << stop.first->name << std::endl;
-            std::cout << "\tDate and time: " << stop.second << std::endl;
+        std::cout << "Enter start id than stop id and that departure date time" << std::endl;
+        std::cout << "For exit enter 'q'" << std::endl;
+        std::string start, finish, departure;
+        std::getline(std::cin , start);
+        if (start == "q") {
+            return 0;
+        }
+        std::getline(std::cin, finish);
+        std::getline(std::cin, departure);
+        while(start != "q") {
+            try {
+                 for (auto const& stop : map.journey(start, finish, boost::posix_time::time_from_string(departure))) {
+                    std::cout << "Next stop: " << stop.first->name << std::endl;
+                    std::cout << "\tDate and time: " << stop.second << std::endl;
+                }
+            } catch (std::exception const& e) {
+                std::cout << "Something wrong: " << e.what() << std::endl;
+            }
+            std::getline(std::cin, start);
+            std::getline(std::cin, finish);
+            std::getline(std::cin, departure);
         }
     } catch (std::exception const& e) {
         std::cerr << "Unhandled exception: " << e.what() << std::endl;
         return 1;
     }
-    std::cout << "Success!" << std::endl;
-    return 0;
 }
