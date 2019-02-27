@@ -24,21 +24,22 @@ int main(int argc, char** argv) {
         auto map = util::parse(feed_directory);
         std::cout << "Enter start id than stop id and that departure date time" << std::endl;
         std::cout << "For exit enter 'q'" << std::endl;
-        std::string start, finish, departure;
-        std::getline(std::cin , start);
-        if (start == "q") {
-            return 0;
-        }
-        std::getline(std::cin, finish);
-        std::getline(std::cin, departure);
-        while(start != "q") {
+        while(true) {
+            std::string start, finish, departure;
+            std::getline(std::cin , start);
+            if (start == "q") {
+                break;
+            }
+            std::getline(std::cin, finish);
+            std::getline(std::cin, departure);
             try {
-                 for (auto const& leg : map.journey(start, finish, boost::posix_time::time_from_string(departure))) {
+                for (auto const& leg : map.journey(start, finish, boost::posix_time::time_from_string(departure))) {
                     std::cout << "Next stop: " << leg.stop->name << std::endl;
                     std::cout << "\tDate and time: " << leg.arrival << std::endl;
                     if (leg.transport) {
-                        std::cout << "\tArrived by " << leg.transport->trip->short_name << " direction to " <<
-                            leg.transport->trip->head_sign << std::endl;
+                        std::cout << "\tArrived by " << leg.transport->trip->route->desc
+                            << " " << leg.transport->trip->route->short_name
+                            << " direction to " << leg.transport->trip->head_sign << std::endl;
                     }
                     if (leg.transfer) {
                         std::cout << "\tArrived by foot. Transfer time: " << leg.transfer->duration << std::endl;
@@ -47,9 +48,6 @@ int main(int argc, char** argv) {
             } catch (std::exception const& e) {
                 std::cout << "Something wrong: " << e.what() << std::endl;
             }
-            std::getline(std::cin, start);
-            std::getline(std::cin, finish);
-            std::getline(std::cin, departure);
         }
     } catch (std::exception const& e) {
         std::cerr << "Unhandled exception: " << e.what() << std::endl;
