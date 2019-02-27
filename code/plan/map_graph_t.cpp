@@ -14,17 +14,24 @@ namespace {
     struct list_t {
         ds::stop_ptr stop;
         ds::date_time_t date_time;
+        ds::stop_time_ptr stop_time;
+        ds::transfer_ptr transfer;
         std::shared_ptr<list_t> parent;
     };
 
-    std::vector<std::pair<ds::stop_ptr, ds::date_time_t>> unwind(std::shared_ptr<list_t> const& list) {
-        std::deque<std::pair<ds::stop_ptr, ds::date_time_t>> deq;
+    std::vector<ds::path_leg_t> unwind(std::shared_ptr<list_t> const& list) {
+        std::deque<ds::path_leg_t> deq;
         auto next = list;
         while (next != nullptr) {
-            deq.emplace_front(next->stop, next->date_time);
+            ds::path_leg_t leg;
+            leg.arrival = next->date_time;
+            leg.stop = next->stop;
+            leg.transport = next->stop_time;
+            leg.transfer = next->transfer;
+            deq.push_front(std::move(leg));
             next = next->parent;
         }
-        return std::vector<std::pair<ds::stop_ptr, ds::date_time_t>>(deq.cbegin(), deq.cend());
+        return std::vector<ds::path_leg_t>(deq.cbegin(), deq.cend());
     }
 
     ds::date_time_t date_with_other_time(ds::date_time_t date, ds::time_t time) {
@@ -46,7 +53,7 @@ namespace processing {
             services(std::move(services)), routes(std::move(routes)) {
     }
 
-     std::vector<std::pair<ds::stop_ptr, ds::date_time_t>> map_graph_t::journey(
+     std::vector<ds::path_leg_t> map_graph_t::journey(
             std::string const& start, std::string const& finish, data_structures::date_time_t const& departure) const {
         if (stops.count(start) == 0 || stops.count(finish) == 0) {
             throw std::runtime_error("Unable to find start or finish stops by provided id");

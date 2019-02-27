@@ -118,6 +118,13 @@ namespace data_structures {
     };
 
     bool stop_time_cmp(stop_time_ptr const& l, stop_time_ptr const& r);
+
+    struct path_leg_t {
+        date_time_t  arrival;
+        stop_ptr stop;
+        stop_time_ptr transport;
+        transfer_ptr transfer; // transfer or transport is set. not both at the same time
+    };
 }
 
 #endif //PLANNER_STRUCTURES_H

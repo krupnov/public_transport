@@ -33,9 +33,16 @@ int main(int argc, char** argv) {
         std::getline(std::cin, departure);
         while(start != "q") {
             try {
-                 for (auto const& stop : map.journey(start, finish, boost::posix_time::time_from_string(departure))) {
-                    std::cout << "Next stop: " << stop.first->name << std::endl;
-                    std::cout << "\tDate and time: " << stop.second << std::endl;
+                 for (auto const& leg : map.journey(start, finish, boost::posix_time::time_from_string(departure))) {
+                    std::cout << "Next stop: " << leg.stop->name << std::endl;
+                    std::cout << "\tDate and time: " << leg.arrival << std::endl;
+                    if (leg.transport) {
+                        std::cout << "\tArrived by " << leg.transport->trip->short_name << " direction to " <<
+                            leg.transport->trip->head_sign << std::endl;
+                    }
+                    if (leg.transfer) {
+                        std::cout << "\tArrived by foot. Transfer time: " << leg.transfer->duration << std::endl;
+                    }
                 }
             } catch (std::exception const& e) {
                 std::cout << "Something wrong: " << e.what() << std::endl;
