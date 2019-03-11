@@ -240,6 +240,12 @@ namespace util {
                 return l->sequence < r->sequence;
             });
         }
+//        std::sort(stop_times.rbegin(), stop_times.rend(), ds::stop_time_cmp);
+//        std::cout << "Last ten departures by time: " << std::endl;
+//        for (size_t i = 0 ; i < 10 ; ++i) {
+//            std::cout << "\tarrival: " << stop_times.at(i)->arrival
+//            << " departure: " << stop_times.at(i)->departure << std::endl;
+//        }
 
 //        std::cout << "Some test data: " << std::endl;
 //        auto const& stop = stops.at("8503052");

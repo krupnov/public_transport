@@ -34,8 +34,8 @@ namespace {
         return std::vector<ds::path_leg_t>(deq.cbegin(), deq.cend());
     }
 
-    ds::date_time_t date_with_other_time(ds::date_time_t date, ds::time_t time) {
-        return ds::date_time_t(date.date(), time);
+    auto date_with_other_time(ds::date_t const& date, ds::time_t const& time) {
+        return ds::date_time_t(date, time);
     }
 
     struct next_stop_t {
@@ -45,20 +45,44 @@ namespace {
         ds::stop_time_ptr transport;
 
         next_stop_t(
-                ds::stop_ptr const& destination,
-                ds::stop_ptr const& source,
-                ds::transfer_ptr const& transfer,
-                ds::stop_time_ptr const& transport) noexcept :
-                destination(destination),
-                source(source),
-                transfer(transfer),
-                transport(transport) {
+                ds::stop_ptr destination,
+                ds::stop_ptr source,
+                ds::transfer_ptr transfer,
+                ds::stop_time_ptr transport) noexcept :
+                destination(std::move(destination)),
+                source(std::move(source)),
+                transfer(std::move(transfer)),
+                transport(std::move(transport)) {
         }
 
         bool operator<(next_stop_t const& that) const {
             return destination->id < that.destination->id;
         }
     };
+
+    void add_next_stops(std::vector<std::pair<ds::date_t , ds::stop_time_ptr >>& result,
+            ds::stop_ptr const& stop, ds::date_t const& date, ds::date_time_t const& departure) {
+        auto st_cmp = [&](ds::stop_time_ptr const& l, ds::date_time_t const& r) {
+            return date_with_other_time(date, l->departure) < r;
+        };
+        for (auto it =
+                std::lower_bound(stop->stop_times.cbegin(), stop->stop_times.cend(), departure, st_cmp) ;
+             it != stop->stop_times.cend() ; ++it) {
+            auto week_day = date.day_of_week();
+            auto const& service = (*it)->trip->service;
+            if (service->week_days.count(week_day.as_enum()) == 0 && service->exceptions.count(date) == 0) {
+                continue;
+            }
+            result.emplace_back(date, *it);
+        }
+    }
+
+    auto get_next_stops(ds::stop_ptr const& stop, ds::date_time_t const& date_time) {
+        std::vector<std::pair<ds::date_t, ds::stop_time_ptr>> result;
+        result.reserve(stop->stop_times.size() / 4 + stop->stop_times.size());
+        add_next_stops(result, stop, date_time.date(), date_time);
+        return result;
+    }
 }
 
 namespace processing {
@@ -85,7 +109,7 @@ namespace processing {
         std::unordered_map<std::string, std::shared_ptr<list_t>> visited_stops;
         std::unordered_set<std::string> used_trips;
         std::priority_queue<
-                next_stop_with_time_t, std::vector<next_stop_with_time_t>, std::greater<next_stop_with_time_t> > queue;
+                next_stop_with_time_t, std::vector<next_stop_with_time_t>, std::greater<> > queue;
         queue.emplace(departure, next_stop_t(source, nullptr, nullptr, nullptr));
         while (!queue.empty()) {
             auto next = queue.top();
@@ -105,27 +129,22 @@ namespace processing {
             if (next.second.destination->id == finish) {
                 break;
             }
-            auto const& s_t = next.second.destination->stop_times;
+            auto s_t = get_next_stops(next.second.destination, next.first);
 
-            auto st_cmp = [&](ds::stop_time_ptr const& l, ds::date_time_t const& r) {
-               return date_with_other_time(departure, l->departure) < r;
-            };
-            for (auto it =
-                    std::lower_bound(s_t.cbegin(), s_t.cend(), next.first, st_cmp) ;
-                    it != s_t.cend() ; ++it) {
-                const auto& cur_trip = (*it)->trip;
+            for (auto it = s_t.cbegin() ; it != s_t.cend() ; ++it) {
+                const auto& cur_trip = it->second->trip;
                 if (used_trips.count(cur_trip->id) != 0) {
                     continue;
                 }
                 used_trips.insert(cur_trip->id);
                 auto next_stop_time_it = std::upper_bound(
-                        cur_trip->stop_times.cbegin(), cur_trip->stop_times.cend(), (*it)->sequence,
+                        cur_trip->stop_times.cbegin(), cur_trip->stop_times.cend(), it->second->sequence,
                         [](int const& l, ds::stop_time_ptr const& r) {
                             return l < r->sequence;
                         });
                 for ( ; next_stop_time_it != cur_trip->stop_times.cend() ; ++next_stop_time_it) {
                     queue.emplace(
-                            date_with_other_time(departure, (*next_stop_time_it)->arrival),
+                            date_with_other_time(it->first, (*next_stop_time_it)->arrival),
                             next_stop_t(
                                     (*next_stop_time_it)->stop,
                                     next.second.destination,

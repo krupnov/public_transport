@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
         auto feed_directory = vm["feed_directory"].as<std::string>();
         std::cout << "Parsing feed" << std::endl;
         auto map = util::parse(feed_directory);
-        std::cout << "Enter start id than stop id and that departure date time" << std::endl;
+        std::cout << "Enter start id than stop id and than departure date time each in separate line" << std::endl;
         std::cout << "For exit enter 'q'" << std::endl;
         while(true) {
             std::string start, finish, departure;
