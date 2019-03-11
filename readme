@@ -1,3 +1,5 @@
-Simple GTFS  playground.
+Simple GTFS playground.
 
 Trying to parse and create some trips automaticaly.
+
+GTFS parser. Time based Dijkstra implementation. C++
