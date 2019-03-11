@@ -80,7 +80,12 @@ namespace {
     auto get_next_stops(ds::stop_ptr const& stop, ds::date_time_t const& date_time) {
         std::vector<std::pair<ds::date_t, ds::stop_time_ptr>> result;
         result.reserve(stop->stop_times.size() / 4 + stop->stop_times.size());
-        add_next_stops(result, stop, date_time.date(), date_time);
+        for (size_t i = 3 ; i > 0 ; --i) {
+            add_next_stops(result, stop, (date_time - boost::posix_time::hours(i * 24)).date() , date_time);
+        }
+        for (size_t i = 0 ; i < 2 ; ++i) {
+            add_next_stops(result, stop, (date_time + boost::posix_time::hours(i * 24)).date() , date_time);
+        }
         return result;
     }
 }
